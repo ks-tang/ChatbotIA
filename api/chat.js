@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   try {
     let response;
 
-    // 1. Si le modèle demandé est hébergé sur Groq
+    // 1. Si le modèle demandé est sur Groq
     if (provider === 'groq') {
       response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://chatbot-ia.vercel.app',
+          'HTTP-Referer': req.headers.referer || 'https://chatbot-ia.vercel.app',
           'X-Title': 'Assistant IA Vocal',
           'Content-Type': 'application/json'
         },
@@ -40,9 +40,19 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
+
+    // Vérification de la réponse HTTP de l'API externe
+    if (!response.ok) {
+      console.error(`Erreur ${provider || 'openrouter'} (${response.status}):`, data);
+      return res.status(response.status).json({ 
+        error: data.error?.message || 'Erreur renvoyée par le fournisseur d\'IA',
+        details: data 
+      });
+    }
+
     return res.status(200).json(data);
   } catch (error) {
-    console.error(error);
+    console.error('Erreur Serveur Vercel:', error);
     return res.status(500).json({ error: 'Erreur lors de la communication avec l\'IA' });
   }
 }
