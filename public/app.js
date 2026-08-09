@@ -1,18 +1,9 @@
-const apiKeyInput = document.getElementById('apiKey');
-const saveKeyBtn = document.getElementById('saveKey');
+const modelSelect = document.getElementById('modelSelect');
 const chatLog = document.getElementById('chatLog');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const micBtn = document.getElementById('micBtn');
 
-// 1. Charger la clé API sauvegardée
-apiKeyInput.value = localStorage.getItem('groq_api_key') || '';
-saveKeyBtn.addEventListener('click', () => {
-  localStorage.setItem('groq_api_key', apiKeyInput.value);
-  alert('Clé API enregistrée localement !');
-});
-
-// 2. Fonction pour afficher les messages
 function appendMessage(sender, text) {
   const msgDiv = document.createElement('div');
   msgDiv.className = sender === 'Utilisateur' ? 'user-msg' : 'ai-msg';
@@ -21,50 +12,52 @@ function appendMessage(sender, text) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
-// 3. Appel à l'API Groq (Gratuite et ultra-rapide)
 async function sendToAI(promptText) {
-  const apiKey = localStorage.getItem('groq_api_key');
-  if (!apiKey) {
-    alert('Veuillez d\'abord ajouter votre clé API Groq.');
-    return;
-  }
+  const selectElement = document.getElementById('modelSelect');
+  const selectedOption = selectElement.options[selectElement.selectedIndex];
+  
+  const selectedModel = selectedOption.value;
+  const provider = selectedOption.getAttribute('data-provider');
 
   appendMessage('Utilisateur', promptText);
 
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: promptText }]
+        message: promptText,
+        model: selectedModel,
+        provider: provider
       })
     });
 
     const data = await response.json();
-    const reply = data.choices[0].message.content;
     
-    appendMessage('IA', reply);
-    speak(reply); // L'IA parle
+    if (data.choices && data.choices[0]) {
+      const reply = data.choices[0].message.content;
+      appendMessage('IA', reply);
+      speak(reply);
+    } else {
+      appendMessage('Système', 'L\'IA sélectionnée est indisponible.');
+    }
   } catch (error) {
     console.error(error);
     appendMessage('Système', 'Erreur lors de la communication avec l\'IA.');
   }
 }
 
-// 4. Synthèse vocale (L'IA parle)
+// Synthèse vocale
 function speak(text) {
   if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'fr-FR';
     window.speechSynthesis.speak(utterance);
   }
 }
 
-// 5. Reconnaissance vocale (Écoute le micro)
+// Reconnaissance vocale
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
@@ -72,7 +65,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
   micBtn.addEventListener('click', () => {
     recognition.start();
-    micBtn.textContent = '🎙️ Écoute en cours...';
+    micBtn.textContent = '🎙️ Écoute...';
   });
 
   recognition.onresult = (event) => {
@@ -82,15 +75,12 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     sendToAI(transcript);
   };
 
-  recognition.onerror = () => {
-    micBtn.textContent = '🎤 Écouter';
-  };
+  recognition.onerror = () => { micBtn.textContent = '🎤 Écouter'; };
 } else {
   micBtn.disabled = true;
   micBtn.textContent = 'Micro non supporté';
 }
 
-// Événement clic sur le bouton Envoyer
 sendBtn.addEventListener('click', () => {
   if (userInput.value.trim() !== '') {
     sendToAI(userInput.value);

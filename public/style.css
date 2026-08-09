@@ -17,11 +17,15 @@ body {
 
 .config-box {
   display: flex;
+  align-items: center;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-.config-box input { flex: 1; padding: 8px; }
+.config-box select {
+  flex: 1;
+  padding: 8px;
+}
 
 .chat-log {
   height: 300px;
