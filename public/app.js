@@ -1,8 +1,10 @@
+// Récupération des éléments DOM
 const modelSelect = document.getElementById('modelSelect');
 const chatLog = document.getElementById('chatLog');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const micBtn = document.getElementById('micBtn');
+const stopBtn = document.getElementById('stopBtn');
 
 function appendMessage(sender, text) {
   const msgDiv = document.createElement('div');
@@ -67,6 +69,13 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
   }
 }
+
+// Bouton Stop : stoppe la synthèse vocale immédiatement
+stopBtn.addEventListener('click', () => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+});
 
 // Reconnaissance vocale
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
