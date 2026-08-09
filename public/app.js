@@ -1,3 +1,17 @@
+const modelSelect = document.getElementById('modelSelect');
+const chatLog = document.getElementById('chatLog');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+
+function appendMessage(sender, text) {
+  const msgDiv = document.createElement('div');
+  msgDiv.className = sender === 'Utilisateur' ? 'user-msg' : 'ai-msg';
+  msgDiv.textContent = `${sender}: ${text}`;
+  chatLog.appendChild(msgDiv);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
 async function sendToAI(promptText) {
   const selectElement = document.getElementById('modelSelect');
   const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -43,3 +57,44 @@ async function sendToAI(promptText) {
     appendMessage('Système', 'Erreur lors de la communication avec l\'IA.');
   }
 }
+
+// Synthèse vocale
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+// Reconnaissance vocale
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'fr-FR';
+
+  micBtn.addEventListener('click', () => {
+    recognition.start();
+    micBtn.textContent = '🎙️ Écoute...';
+  });
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    userInput.value = transcript;
+    micBtn.textContent = '🎤 Écouter';
+    sendToAI(transcript);
+  };
+
+  recognition.onerror = () => { micBtn.textContent = '🎤 Écouter'; };
+} else {
+  micBtn.disabled = true;
+  micBtn.textContent = 'Micro non supporté';
+}
+
+sendBtn.addEventListener('click', () => {
+  if (userInput.value.trim() !== '') {
+    sendToAI(userInput.value);
+    userInput.value = '';
+  }
+});
