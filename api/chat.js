@@ -1,15 +1,21 @@
 export default async function handler(req, res) {
+  console.log('--- [API ROUTE INTERCEPTÉE] ---');
+  console.log('Méthode HTTP:', req.method);
+  console.log('Corps de la requête (body):', req.body);
+
   if (req.method !== 'POST') {
+    console.log('❌ Erreur: Méthode non autorisée');
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
   const { message, model, provider } = req.body;
+  console.log(`Provider sélectionné: ${provider} | Modèle: ${model}`);
 
   try {
     let response;
 
-    // 1. Si le modèle demandé est sur Groq
     if (provider === 'groq') {
+      console.log('Appel à l\'API Groq...');
       response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -21,9 +27,8 @@ export default async function handler(req, res) {
           messages: [{ role: 'user', content: message }]
         })
       });
-
-    // 2. Sinon, on passe par OpenRouter
     } else {
+      console.log('Appel à l\'API OpenRouter...');
       response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -39,20 +44,23 @@ export default async function handler(req, res) {
       });
     }
 
+    console.log(`Statut HTTP du provider (${provider}):`, response.status);
+
     const data = await response.json();
 
-    // Vérification de la réponse HTTP de l'API externe
     if (!response.ok) {
-      console.error(`Erreur ${provider || 'openrouter'} (${response.status}):`, data);
+      console.error('❌ Erreur renvoyée par le provider:', JSON.stringify(data, null, 2));
       return res.status(response.status).json({ 
         error: data.error?.message || 'Erreur renvoyée par le fournisseur d\'IA',
         details: data 
       });
     }
 
+    console.log('✅ Réponse IA reçue avec succès');
     return res.status(200).json(data);
+
   } catch (error) {
-    console.error('Erreur Serveur Vercel:', error);
-    return res.status(500).json({ error: 'Erreur lors de la communication avec l\'IA' });
+    console.error('❌ Exception serveur Vercel:', error);
+    return res.status(500).json({ error: 'Erreur serveur lors de la communication avec l\'IA' });
   }
 }
