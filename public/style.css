@@ -221,3 +221,104 @@ button:hover {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===================================================
+   FOOTER KO-FI (STYLE NOTHING)
+   =================================================== */
+
+body {
+  /* Mise en page flex globale pour caler le footer en bas */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px 16px;
+}
+
+.footer-kofi {
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  justify-content: center;
+}
+
+.kofi-card {
+  width: 100%;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: relative;
+  transition: border-color 0.2s ease;
+}
+
+.kofi-card:hover {
+  border-color: #333333;
+}
+
+.kofi-dot {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--accent-red);
+  border-radius: 50%;
+}
+
+.kofi-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  padding-left: 8px;
+}
+
+.kofi-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--text-main);
+  color: #000000;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.kofi-btn:hover {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+.kofi-btn:active {
+  transform: scale(0.97);
+}
+
+.kofi-arrow {
+  font-family: var(--font-matrix);
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.kofi-btn:hover .kofi-arrow {
+  transform: translateX(3px);
+}
+
+/* Adaptation écran mobile */
+@media (max-width: 480px) {
+  .kofi-card {
+    flex-direction: column;
+    text-align: center;
+    padding-top: 24px;
+  }
+}

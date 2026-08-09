@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
+  
+  <main class="container">
     <h1>Assistant IA Vocal</h1>
 
     <!-- Menu de sélection d'IA pour l'utilisateur -->
@@ -23,7 +24,7 @@
         <option value="llama-3.3-70b-versatile" data-provider="groq">Groq - Llama 3.3 70B (Ultra Rapide)</option>
         
         <!-- Options OpenRouter : modèles gratuits variés -->
-         <option value="openai/gpt-oss-20b:free" data-provider="openrouter">OpenRouter - GPT OSS 20B (Gratuit)</option>
+        <option value="openai/gpt-oss-20b:free" data-provider="openrouter">OpenRouter - GPT OSS 20B (Gratuit)</option>
         <option value="google/gemma-4-26b-a4b-it:free" data-provider="openrouter">OpenRouter - Google Gemma 4 26B A4B (Gratuit)</option>
         <option value="nvidia/nemotron-3-ultra-550b-a55b:free" data-provider="openrouter">OpenRouter - Nvidia Nemotron 3 Ultra 550B A55B (Gratuit)</option>
       </select>
@@ -38,28 +39,19 @@
       <button id="sendBtn">Envoyer</button>
       <button id="micBtn">🎤 Écouter</button>
     </div>
-  </div>
+  </main>
 
-  <!-- Kofi -->
-  <div className="w-full max-w-sm mx-auto p-4 sm:p-5 bg-[#141414] border border-[#262626] rounded-2xl shadow-lg hover:border-[#333333] transition-all duration-300 flex flex-col items-center gap-3 text-center relative overflow-hidden">
-    
-    {/* Petit point d'accentuation rouge Nothing en haut */}
-    <div className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-[#d71921]" />
-
-    <p className="text-xs sm:text-sm text-neutral-300 font-normal leading-relaxed tracking-wide font-sans">
-      {t('kofi.question')}
-    </p>
-    
-    <a
-      href="https://ko-fi.com/kstang"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group inline-flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-neutral-200 text-black rounded-xl shadow-sm transition-all duration-200 active:scale-95 text-xs font-semibold tracking-wider uppercase"
-    >
-      <span>{t('kofi.request')}</span>
-      <span className="text-black group-hover:translate-x-1 transition-transform duration-200 text-xs font-mono">→</span>
-    </a>
-  </div>
+  <!-- Footer pour Ko-fi -->
+  <footer class="footer-kofi">
+    <div class="kofi-card">
+      <span class="kofi-dot"></span>
+      <p class="kofi-text">Vous aimez ce projet ?</p>
+      <a href="https://ko-fi.com/kstang" target="_blank" rel="noopener noreferrer" class="kofi-btn">
+        <span>M'offrir un chocolat sur Kofi</span>
+        <span class="kofi-arrow">→</span>
+      </a>
+    </div>
+  </footer>
 
   <script src="app.js"></script>
 </body>
