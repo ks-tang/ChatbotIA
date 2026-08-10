@@ -8,25 +8,46 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  // 1. Récupération du paramètre context
-  const { message, model, provider, context } = req.body;
-  console.log(`Provider sélectionné: ${provider} | Modèle: ${model} | RAG Contexte présent: ${!!context}`);
+  // 1. Récupération des paramètres (ajout de "images")
+  const { message, model, provider, context, images } = req.body;
+  console.log(`Provider sélectionné: ${provider} | Modèle: ${model} | RAG Contexte présent: ${!!context} | Images: ${images?.length || 0}`);
 
-  // 2. Construction de la liste des messages avec System Prompt si RAG
+  // 2. Construction de la liste des messages
   const messagesPayload = [];
 
   if (context && context.trim() !== '') {
     const systemPrompt = `Tu es un assistant IA spécialisé et rigoureux.
-Tu dois répondre à la question de l'utilisateur en te basant EXCLUSIVEMENT sur les documents de référence fournis ci-dessous.
-Si l'information n'est pas présente dans les documents, indique-le clairement à l'utilisateur sans inventer de faits.
+    Tu dois répondre à la question de l'utilisateur en te basant EXCLUSIVEMENT sur les documents de référence et/ou images fournis ci-dessous.
+    Si l'information n'est pas présente dans les documents ou images, indique-le clairement à l'utilisateur sans inventer de faits.
 
-=== DOCUMENTS DE RÉFÉRENCE ===
-${context}`;
+    === DOCUMENTS DE RÉFÉRENCE ===
+    ${context}`;
 
     messagesPayload.push({ role: 'system', content: systemPrompt });
   }
 
-  messagesPayload.push({ role: 'user', content: message });
+  // 3. Construction du message utilisateur (Texte + Images éventuelles)
+  if (images && Array.isArray(images) && images.length > 0) {
+    // Format Multimodal (Tableau d'objets content)
+    const userContent = [
+      { type: 'text', text: message || 'Analyse cette image.' }
+    ];
+
+    // On ajoute chaque image au format image_url
+    images.forEach((imgBase64) => {
+      userContent.push({
+        type: 'image_url',
+        image_url: {
+          url: imgBase64 // Doit être sous la forme "data:image/png;base64,..."
+        }
+      });
+    });
+
+    messagesPayload.push({ role: 'user', content: userContent });
+  } else {
+    // Format Standard (Texte brut)
+    messagesPayload.push({ role: 'user', content: message });
+  }
 
   try {
     let response;
@@ -40,7 +61,7 @@ ${context}`;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: model || 'llama-3.3-70b-versatile',
+          model: model || 'llama-3.2-11b-vision-preview',
           messages: messagesPayload
         })
       });
@@ -55,7 +76,7 @@ ${context}`;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: model || 'google/gemma-4-26b-a4b-it:free',
+          model: model || 'google/gemini-2.0-flash-001',
           messages: messagesPayload
         })
       });

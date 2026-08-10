@@ -234,6 +234,16 @@ async function handleSend() {
   }
 }
 
+// Convertir une image en Base64
+function readImageAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result); // Renvoie 'data:image/png;base64,...'
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+
 // Événement clic sur Envoyer
 ragSendBtn.addEventListener('click', handleSend);
 
