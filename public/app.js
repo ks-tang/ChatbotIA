@@ -65,6 +65,7 @@ async function sendToAI(promptText) {
         
         // On affiche la variable friendlyError
         appendMessage('Système', friendlyError);
+        speak(friendlyError);
       }
 
     } catch (error) {
