@@ -197,18 +197,21 @@ async function handleSend() {
   showThinking();
 
   try {
-    const extractedContext = await extractTextFromFiles(uploadedFiles);
+    // 1. Déstructuration : on sépare le texte extrait (context) des images Base64 (images)
+    const { context, images } = await extractTextFromFiles(uploadedFiles);
 
     const selectElement = document.getElementById('ragModelSelect');
     const selectedOption = selectElement.options[selectElement.selectedIndex];
     const providerStr = selectedOption.getAttribute('data-provider');
 
+    // 2. Envoi à l'API avec la propriété images ajoutée
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: userPrompt,
-        context: extractedContext,
+        context: context,      // Texte des PDF/TXT
+        images: images,        // Tableau des images en Base64 ([ "data:image/png;base64,..." ])
         model: selectElement.value,
         provider: providerStr 
       })
@@ -234,14 +237,42 @@ async function handleSend() {
   }
 }
 
-// Convertir une image en Base64
+// Fonction pour lire une image en Base64
 function readImageAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result); // Renvoie 'data:image/png;base64,...'
+    reader.onload = () => resolve(reader.result);
     reader.onerror = (error) => reject(error);
     reader.readAsDataURL(file);
   });
+}
+
+// Extraction globale
+async function extractTextFromFiles(files) {
+  let combinedContext = '';
+  const imageFiles = [];
+
+  for (const file of files) {
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith('.pdf')) {
+      const text = await readPdfFile(file);
+      combinedContext += `\n=== SOURCE PDF: ${file.name} ===\n${text}\n`;
+    } 
+    else if (fileName.match(/\.(jpg|jpeg|png|webp)$/)) {
+      // On convertit l'image en Base64 au lieu de la lire en texte brut
+      const base64 = await readImageAsBase64(file);
+      imageFiles.push(base64);
+    } 
+    else {
+      // Fichiers texte (.txt, .md, .csv)
+      const text = await readTextFile(file);
+      combinedContext += `\n=== SOURCE TEXTE: ${file.name} ===\n${text}\n`;
+    }
+  }
+
+  // Renvoie le texte extrait et le tableau d'images Base64
+  return { context: combinedContext, images: imageFiles };
 }
 
 // Événement clic sur Envoyer
