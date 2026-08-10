@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Conteneur d'injection du Header -->
+  <div id="header-placeholder"></div>
   
   <main class="container">
     <h1>Assistant IA Vocal</h1>
@@ -54,6 +57,14 @@
     </div>
   </footer>
 
+  <!-- Script d'injection du Header -->
+  <script>
+    fetch('header.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+      });
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
