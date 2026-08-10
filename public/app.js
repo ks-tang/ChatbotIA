@@ -14,8 +14,17 @@ function appendMessage(sender, text) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+// Fonction utilitaire pour stopper la synthèse vocale à tout moment
+function stopSpeech() {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
 // L'utilisateur envoie un message 
 async function sendToAI(promptText) {
+  stopSpeech();
+
   const selectElement = document.getElementById('modelSelect');
   const selectedOption = selectElement.options[selectElement.selectedIndex];
   
@@ -30,54 +39,51 @@ async function sendToAI(promptText) {
   appendMessage('Utilisateur', promptText);
 
   try {
-      console.log('Envoi de la requête POST vers /api/chat...');
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: promptText,
-          model: selectedModel,
-          provider: provider
-        })
-      });
+    console.log('Envoi de la requête POST vers /api/chat...');
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: promptText,
+        model: selectedModel,
+        provider: provider
+      })
+    });
 
-      console.log('Statut HTTP /api/chat:', response.status);
+    console.log('Statut HTTP /api/chat:', response.status);
 
-      const data = await response.json();
-      console.log('Réponse reçue du serveur:', data);
+    const data = await response.json();
+    console.log('Réponse reçue du serveur:', data);
 
-      if (response.ok && data.choices && data.choices[0]) {
-        const reply = data.choices[0].message.content;
-        appendMessage('IA', reply);
-        speak(reply);
-      } else {
-        console.warn('⚠️ La réponse ne contient pas de choix valide ou comporte une erreur:', data);
-        
-        // Variable pour stocker le message d'erreur final
-        let friendlyError = 'L\'IA sélectionnée est indisponible.';
+    if (response.ok && data.choices && data.choices[0]) {
+      const reply = data.choices[0].message.content;
+      appendMessage('IA', reply);
+      speak(reply);
+    } else {
+      console.warn('⚠️ La réponse ne contient pas de choix valide ou comporte une erreur:', data);
+      
+      let friendlyError = 'L\'IA sélectionnée est indisponible.';
 
-        // if erreur 429
-        if (response.status === 429) {
-          friendlyError = 'Ce modèle gratuit est temporairement surchargé. Réessayez dans une minute ou changez de modèle.';
-        } else if (data.error) {
-          friendlyError = data.error;
-        }
-        
-        // On affiche la variable friendlyError
-        appendMessage('Système', friendlyError);
-        speak(friendlyError);
+      if (response.status === 429) {
+        friendlyError = 'Ce modèle gratuit est temporairement surchargé. Réessayez dans une minute ou changez de modèle.';
+      } else if (data.error) {
+        friendlyError = data.error;
       }
-
-    } catch (error) {
-      console.error('❌ Erreur Fetch côté client:', error);
-      appendMessage('Système', 'Erreur lors de la communication avec le serveur.');
+      
+      appendMessage('Système', friendlyError);
+      speak(friendlyError);
     }
-  }
 
-// Synthèse vocale
+  } catch (error) {
+    console.error('❌ Erreur Fetch côté client:', error);
+    appendMessage('Système', 'Erreur lors de la communication avec le serveur.');
+  }
+}
+
+// Fonction de synthèse vocale, lire la réponse de l'IA
 function speak(text) {
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+    stopSpeech(); 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'fr-FR';
     window.speechSynthesis.speak(utterance);
@@ -85,11 +91,7 @@ function speak(text) {
 }
 
 // Bouton Stop : stoppe la synthèse vocale immédiatement
-stopBtn.addEventListener('click', () => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
-});
+stopBtn.addEventListener('click', stopSpeech);
 
 // Reconnaissance vocale
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -98,6 +100,9 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   recognition.lang = 'fr-FR';
 
   micBtn.addEventListener('click', () => {
+    // Coupe la voix de l'IA dès qu'on clique sur le micro pour écouter
+    stopSpeech();
+    
     recognition.start();
     micBtn.textContent = '🎙️ Écoute...';
   });
