@@ -266,7 +266,9 @@ button:hover {
 
 .nav-links {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 1.5rem;      
+  margin-left: 3rem;
 }
 
 .nav-item {
