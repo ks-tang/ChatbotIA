@@ -21,6 +21,24 @@ function stopSpeech() {
   }
 }
 
+// Affiche une bulle d'attente animée
+function showThinking() {
+  const thinkingDiv = document.createElement('div');
+  thinkingDiv.id = 'thinkingBubble';
+  thinkingDiv.className = 'ai-msg thinking-msg';
+  thinkingDiv.innerHTML = `IA: Réflexion en cours<span class="dots"><span>.</span><span>.</span><span>.</span></span>`;
+  chatLog.appendChild(thinkingDiv);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+// Supprime la bulle d'attente
+function removeThinking() {
+  const thinkingDiv = document.getElementById('thinkingBubble');
+  if (thinkingDiv) {
+    thinkingDiv.remove();
+  }
+}
+
 // L'utilisateur envoie un message 
 async function sendToAI(promptText) {
   stopSpeech();
@@ -38,6 +56,8 @@ async function sendToAI(promptText) {
 
   appendMessage('Utilisateur', promptText);
 
+  showThinking();
+
   try {
     console.log('Envoi de la requête POST vers /api/chat...');
     const response = await fetch('/api/chat', {
@@ -53,6 +73,7 @@ async function sendToAI(promptText) {
     console.log('Statut HTTP /api/chat:', response.status);
 
     const data = await response.json();
+    removeThinking();
     console.log('Réponse reçue du serveur:', data);
 
     if (response.ok && data.choices && data.choices[0]) {
