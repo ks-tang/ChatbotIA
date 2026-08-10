@@ -54,7 +54,7 @@
     <!-- Champ de saisie et boutons -->
     <div class="controls">
       <input type="text" id="ragUserInput" placeholder="Posez une question sur vos documents...">
-      <button id="sendBtn">Envoyer</button>
+      <button id="ragSendBtn">Envoyer</button>
       <button id="micBtn">🎤 Écouter</button>
       <button id="stopBtn" title="Arrêter la lecture vocale">⏹️ Stop</button>
     </div>
@@ -72,18 +72,18 @@
     </div>
   </footer>
 
-  <!-- Script d'injection du Header avec activation de l'onglet courant -->
+  <!-- Script d'injection du Header -->
   <script>
     fetch('header.html')
       .then(res => res.text())
       .then(data => {
         document.getElementById('header-placeholder').innerHTML = data;
-        // Met en surbrillance le lien RAG
         const links = document.querySelectorAll('.nav-item');
         links.forEach(link => link.classList.remove('active'));
         const ragLink = Array.from(links).find(l => l.getAttribute('href') === 'rag.html');
         if (ragLink) ragLink.classList.add('active');
-      });
+      })
+      .catch(err => console.error("Erreur de chargement du header:", err));
   </script>
 
   <script src="rag.js"></script>
