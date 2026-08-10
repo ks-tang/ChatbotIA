@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatbotIA - RAG & Base de Connaissances</title>
+
+  <!-- Polices style Nothing -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+
+  <!-- Conteneur d'injection du Header -->
+  <div id="header-placeholder"></div>
+
+  <main class="container">
+    <h1>RAG & Connaissances</h1>
+    <p class="subtitle">Importez vos documents (PDF, TXT) pour poser des questions à une IA alimentée par vos propres données.</p>
+
+    <!-- Zone de dépôt de fichiers (RAG) -->
+    <div class="upload-box" id="dropZone">
+      <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.csv" hidden>
+      <div class="upload-content">
+        <span class="upload-icon">📁</span>
+        <p class="upload-text">Glissez-déposez vos fichiers ici ou <span class="browse-link" id="browseBtn">parcourir</span></p>
+        <span class="upload-hint">Formats supportés : PDF, TXT, MD, CSV</span>
+      </div>
+    </div>
+
+    <!-- Liste des fichiers chargés -->
+    <div class="file-list-container">
+      <h3>Documents indexés (<span id="fileCount">0</span>)</h3>
+      <ul id="fileList" class="file-list">
+        <li class="empty-file-item">Aucun document chargé pour le moment.</li>
+      </ul>
+    </div>
+
+    <!-- Zone de sélection du modèle et paramètres -->
+    <div class="config-box">
+      <label for="ragModelSelect">Modèle RAG :</label>
+      <select id="ragModelSelect">
+        <option value="llama-3.3-70b-versatile" data-provider="groq">Groq - Llama 3.3 70B (Contexte rapide)</option>
+        <option value="google/gemma-4-26b-a4b-it:free" data-provider="openrouter">OpenRouter - Gemma 4 26B (Gratuit)</option>
+      </select>
+    </div>
+
+    <!-- Zone de Chat RAG -->
+    <div id="ragChatLog" class="chat-log"></div>
+
+    <!-- Commandes d'envoi -->
+    <div class="controls">
+      <input type="text" id="ragUserInput" placeholder="Posez une question sur vos documents...">
+      <button id="ragSendBtn">Envoyer</button>
+    </div>
+  </main>
+
+  <!-- Footer Ko-fi -->
+  <footer class="footer-kofi">
+    <div class="kofi-card">
+      <span class="kofi-dot"></span>
+      <p class="kofi-text">Vous aimez ce projet ?</p>
+      <a href="https://ko-fi.com/kstang" target="_blank" rel="noopener noreferrer" class="kofi-btn">
+        <span>M'offrir un chocolat sur Kofi</span>
+        <span class="kofi-arrow">→</span>
+      </a>
+    </div>
+  </footer>
+
+  <!-- Script d'injection du Header avec activation de l'onglet courant -->
+  <script>
+    fetch('header.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+        // Met en surbrillance le lien RAG
+        const links = document.querySelectorAll('.nav-item');
+        links.forEach(link => link.classList.remove('active'));
+        const ragLink = Array.from(links).find(l => l.getAttribute('href') === 'rag.html');
+        if (ragLink) ragLink.classList.add('active');
+      });
+  </script>
+
+  <script src="rag.js"></script>
+</body>
+</html>

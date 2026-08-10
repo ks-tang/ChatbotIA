@@ -101,11 +101,44 @@ async function sendToAI(promptText) {
   }
 }
 
+// Nettoie les caractères Markdown et la ponctuation parasite pour l'oral
+function cleanTextForSpeech(text) {
+  if (!text) return '';
+
+  return text
+    // Supprime le Markdown pour le gras/italique (**texte**, *texte*, __texte__, _texte_)
+    .replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, '$1')
+    
+    // Supprime les puces de listes (*, -, +) en début de ligne
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    
+    // Supprime la numérotation de liste (ex: "1. ", "2. ")
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    
+    // Supprime les titres Markdown (### Titre)
+    .replace(/^#{1,6}\s+/gm, '')
+    
+    // Supprime les blocs de code et le code inline (`code`)
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/```[\s\S]*?```/g, '')
+    
+    // Supprime les liens Markdown [texte](url) pour ne garder que le texte
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    
+    // Nettoie les tirets ou astérisques isolés restants
+    .replace(/[-*_=]/g, ' ')
+    
+    // Remplace les espaces multiples ou retours à la ligne consécutifs par un seul espace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // Fonction de synthèse vocale, lire la réponse de l'IA
 function speak(text) {
   if ('speechSynthesis' in window) {
     stopSpeech(); 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const cleanedText = cleanTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
     utterance.lang = 'fr-FR';
     window.speechSynthesis.speak(utterance);
   }

@@ -336,6 +336,117 @@ button:hover {
 }
 
 /* ===================================================
+   PAGE RAG & ZONE DE DÉPÔT DE FICHIERS
+   =================================================== */
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.upload-box {
+  background-color: var(--card-bg);
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.upload-box:hover, .upload-box.drag-over {
+  border-color: var(--text-main);
+  background-color: #1a1a1a;
+}
+
+.upload-icon {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.upload-text {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.browse-link {
+  color: var(--accent-red);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.upload-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Liste des fichiers */
+.file-list-container {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.file-list-container h3 {
+  font-family: var(--font-matrix);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #141414;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.file-name {
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-remove {
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.file-remove:hover {
+  color: var(--accent-red);
+}
+
+.empty-file-item {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ===================================================
    FOOTER KO-FI (STYLE NOTHING)
    =================================================== */
 

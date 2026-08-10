@@ -8,8 +8,25 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  const { message, model, provider } = req.body;
-  console.log(`Provider sélectionné: ${provider} | Modèle: ${model}`);
+  // 1. Récupération du paramètre context
+  const { message, model, provider, context } = req.body;
+  console.log(`Provider sélectionné: ${provider} | Modèle: ${model} | RAG Contexte présent: ${!!context}`);
+
+  // 2. Construction de la liste des messages avec System Prompt si RAG
+  const messagesPayload = [];
+
+  if (context && context.trim() !== '') {
+    const systemPrompt = `Tu es un assistant IA spécialisé et rigoureux.
+Tu dois répondre à la question de l'utilisateur en te basant EXCLUSIVEMENT sur les documents de référence fournis ci-dessous.
+Si l'information n'est pas présente dans les documents, indique-le clairement à l'utilisateur sans inventer de faits.
+
+=== DOCUMENTS DE RÉFÉRENCE ===
+${context}`;
+
+    messagesPayload.push({ role: 'system', content: systemPrompt });
+  }
+
+  messagesPayload.push({ role: 'user', content: message });
 
   try {
     let response;
@@ -24,7 +41,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: model || 'llama-3.3-70b-versatile',
-          messages: [{ role: 'user', content: message }]
+          messages: messagesPayload
         })
       });
     } else {
@@ -34,12 +51,12 @@ export default async function handler(req, res) {
         headers: {
           'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'HTTP-Referer': req.headers.referer || 'https://chatbot-ia.vercel.app',
-          'X-Title': 'Assistant IA Vocal',
+          'X-Title': 'ChatbotIA - RAG System',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: model || 'meta-llama/llama-3.3-70b-instruct:free',
-          messages: [{ role: 'user', content: message }]
+          model: model || 'google/gemma-4-26b-a4b-it:free',
+          messages: messagesPayload
         })
       });
     }
