@@ -14,6 +14,7 @@ function appendMessage(sender, text) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
+// L'utilisateur envoie un message 
 async function sendToAI(promptText) {
   const selectElement = document.getElementById('modelSelect');
   const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -29,36 +30,48 @@ async function sendToAI(promptText) {
   appendMessage('Utilisateur', promptText);
 
   try {
-    console.log('Envoi de la requête POST vers /api/chat...');
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: promptText,
-        model: selectedModel,
-        provider: provider
-      })
-    });
+      console.log('Envoi de la requête POST vers /api/chat...');
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: promptText,
+          model: selectedModel,
+          provider: provider
+        })
+      });
 
-    console.log('Statut HTTP /api/chat:', response.status);
+      console.log('Statut HTTP /api/chat:', response.status);
 
-    const data = await response.json();
-    console.log('Réponse reçue du serveur:', data);
+      const data = await response.json();
+      console.log('Réponse reçue du serveur:', data);
 
-    if (response.ok && data.choices && data.choices[0]) {
-      const reply = data.choices[0].message.content;
-      appendMessage('IA', reply);
-      speak(reply);
-    } else {
-      console.warn('⚠️ La réponse ne contient pas de choix valide ou comporte une erreur:', data);
-      const errorMsg = data.error || 'L\'IA sélectionnée est indisponible.';
-      appendMessage('Système', errorMsg);
+      if (response.ok && data.choices && data.choices[0]) {
+        const reply = data.choices[0].message.content;
+        appendMessage('IA', reply);
+        speak(reply);
+      } else {
+        console.warn('⚠️ La réponse ne contient pas de choix valide ou comporte une erreur:', data);
+        
+        // Variable pour stocker le message d'erreur final
+        let friendlyError = 'L\'IA sélectionnée est indisponible.';
+
+        // if erreur 429
+        if (response.status === 429) {
+          friendlyError = 'Ce modèle gratuit est temporairement surchargé. Réessayez dans une minute ou changez de modèle.';
+        } else if (data.error) {
+          friendlyError = data.error;
+        }
+        
+        // On affiche la variable friendlyError
+        appendMessage('Système', friendlyError);
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur Fetch côté client:', error);
+      appendMessage('Système', 'Erreur lors de la communication avec le serveur.');
     }
-  } catch (error) {
-    console.error('❌ Erreur Fetch côté client:', error);
-    appendMessage('Système', 'Erreur lors de la communication avec l\'IA.');
   }
-}
 
 // Synthèse vocale
 function speak(text) {
