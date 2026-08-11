@@ -619,3 +619,120 @@ body {
     padding-left: 0;
   }
 }
+
+/* ===================================================
+   PAGE AGENT & GESTION DES CLÉS API
+   =================================================== */
+
+.api-keys-card {
+  background-color: #0f0f0f;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.api-keys-card[open] {
+  border-color: #444;
+}
+
+.api-keys-header {
+  padding: 14px 18px;
+  font-family: var(--font-clean);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  background-color: #141414;
+}
+
+.badge-status {
+  font-family: var(--font-matrix);
+  font-size: 0.85rem;
+  background-color: #222;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.api-keys-form {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-color: #0f0f0f;
+  border-top: 1px solid var(--border-color);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.input-group input {
+  background-color: #161616;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text-main);
+  font-family: var(--font-clean);
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.input-group input:focus {
+  border-color: #555;
+}
+
+.keys-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-save {
+  background-color: var(--text-main) !important;
+  color: #000 !important;
+  flex: 2;
+}
+
+.btn-clear {
+  background-color: #222 !important;
+  color: var(--text-muted) !important;
+  flex: 1;
+}
+
+.btn-stop {
+  background-color: #2a1010 !important;
+  color: var(--accent-red) !important;
+  border-color: #4a1517 !important;
+}
+
+.btn-stop:hover {
+  background-color: var(--accent-red) !important;
+  color: #fff !important;
+}
+
+.security-note {
+  font-size: 0.72rem;
+  color: #666;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+  .keys-actions {
+    flex-direction: column;
+  }
+}
