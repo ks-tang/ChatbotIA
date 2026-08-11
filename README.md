@@ -2,6 +2,8 @@
 
 **CHATBOT.IA** est une application web moderne et élégante arborant un design inspiré de l'esthétique Nothing (typographies *VT323* / *Space Grotesk*, touches minimalistes et éléments visuels épurés). L'application combine interaction vocale, analyse de documents personnalisés (RAG) et automatisation d'actions via un agent autonome.
 
+Projet accesible via ce lien : https://chatbot-ia-kstang.vercel.app/
+
 ---
 
 ## 🌟 Fonctionnalités Principales
@@ -38,3 +40,15 @@
 
 ---
 
+### 🔒 Sécurité & Confidentialité
+
+- **Stockage Local :** Les jetons et mots de passe d'application configurés dans l'onglet Agent sont conservés localement dans le localStorage de votre navigateur.
+- **Aucun serveur tiers intermédiaire :** Vos clés ne sont jamais transmises à un serveur intermédiaire non autorisé.
+
+---
+
+### ☕ Soutenir le projet
+
+Si vous appréciez cet outil et souhaitez soutenir son développement :
+
+👉 [M'offrir un chocolat sur Ko-fi](https://ko-fi.com/kstang)
