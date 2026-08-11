@@ -99,9 +99,16 @@ async function sendResendEmail(apiKey, toEmail, subject, textContent) {
       })
     });
 
+    // On vérifie le type de contenu avant de parser le JSON
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const errorText = await res.text();
+      throw new Error(`Réponse non-JSON du serveur (${res.status}) : ${errorText}`);
+    }
+
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || "Erreur lors de l'envoi de l'email via le serveur");
+      throw new Error(data.error || "Erreur lors de l'envoi de l'email.");
     }
     return { success: true, id: data.id };
   } catch (err) {
