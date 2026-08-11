@@ -3,7 +3,9 @@
 // ===================================================
 const KEYS_STORAGE_KEY = 'chatbot_ia_agent_keys';
 
-const keyEmailInput = document.getElementById('keyEmail');
+const keyGmailUserInput = document.getElementById('keyGmailUser');
+const keyGmailAppInput = document.getElementById('keyGmailApp');
+const keyResendInput = document.getElementById('keyResend');
 const keyCalendarInput = document.getElementById('keyCalendar');
 const keySpotifyInput = document.getElementById('keySpotify');
 const keyWebhooksInput = document.getElementById('keyWebhooks');
@@ -19,7 +21,9 @@ function loadSavedKeys() {
 
   try {
     const keys = JSON.parse(saved);
-    if (keys.email) keyEmailInput.value = keys.email;
+    if (keys.gmailUser) keyGmailUserInput.value = keys.gmailUser;
+    if (keys.gmailApp) keyGmailAppInput.value = keys.gmailApp;
+    if (keys.resend) keyResendInput.value = keys.resend;
     if (keys.calendar) keyCalendarInput.value = keys.calendar;
     if (keys.spotify) keySpotifyInput.value = keys.spotify;
     if (keys.webhooks) keyWebhooksInput.value = keys.webhooks;
@@ -59,7 +63,9 @@ function updateBadge() {
 
 saveKeysBtn.addEventListener('click', () => {
   const keys = {
-    email: keyEmailInput.value.trim(),
+    gmailUser: keyGmailUserInput.value.trim(),
+    gmailApp: keyGmailAppInput.value.trim(),
+    resend: keyResendInput.value.trim(),
     calendar: keyCalendarInput.value.trim(),
     spotify: keySpotifyInput.value.trim(),
     webhooks: keyWebhooksInput.value.trim()
