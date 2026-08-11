@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent IA & Automations - CHATBOT.IA</title>
-  <link rel="stylesheet" href="style.css">
+  <title>ChatbotIA - Agent</title>
+
+  <!-- Polices style Nothing -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <!-- Conteneur d'injection du Header -->
   <div id="header-placeholder"></div>
 
-  <!-- CONTENEUR PRINCIPAL -->
   <main class="container">
-    <h1>AGENT WORKFLOW</h1>
-    <p class="subtitle">Connectez vos services et donnez des instructions à l'agent IA</p>
+    <h1>Agent IA & Automations</h1>
+    <p class="subtitle">Connectez vos clés d'API et donnez des ordres à votre agent IA autonome.</p>
 
-    <!-- ACCORDION / BOX SECTEUR CLÉS API (LOCAL STORAGE) -->
+    <!-- Zone de configuration des Clés API (Stockage Local) -->
     <details class="api-keys-card">
       <summary class="api-keys-header">
         <span>⚙️ Connexions & Clés API Services (Stockage Local)</span>
@@ -55,38 +56,37 @@
       </div>
     </details>
 
-    <!-- SELECTION MODEL AGENT -->
-    <div class="config-box" style="margin-top: 20px;">
-      <label for="agentModelSelect">MODÈLE :</label>
+    <!-- Zone de sélection du modèle -->
+    <div class="config-box">
+      <label for="agentModelSelect">Modèle Agent :</label>
       <select id="agentModelSelect">
-        <option value="llama-3.3-70b-versatile" data-provider="groq">Groq - Llama 3.3 70B (Rapide)</option>
-        <option value="google/gemini-2.0-flash-001" data-provider="openrouter">OpenRouter - Gemini 2.0 Flash</option>
+        <option value="llama-3.3-70b-versatile" data-provider="groq">Groq - Llama 3.3 70B (Ultra Rapide)</option>
+        <option value="openai/gpt-oss-20b:free" data-provider="openrouter">OpenRouter - GPT OSS 20B (Gratuit)</option>
+        <option value="google/gemma-4-26b-a4b-it:free" data-provider="openrouter">OpenRouter - Google Gemma 4 26B A4B (Gratuit/Image compatible)</option>
+        <option value="nvidia/nemotron-3-ultra-550b-a55b:free" data-provider="openrouter">OpenRouter - Nvidia Nemotron 3 Ultra 550B A55B (Gratuit)</option>
       </select>
     </div>
 
-    <!-- LOG DU CHAT / AGENT EXÉCUTION -->
-    <div class="chat-log" id="agentChatLog">
-      <div class="ai-msg">
-        Bonjour ! Je suis votre Agent d'Automation. Configurer vos clés de services ci-dessus puis donnez-moi un ordre (ex: "Jette un œil à mes emails", "Ajoute un rendez-vous demain à 14h", "Joue de la musique").
-      </div>
-    </div>
+    <!-- Zone de Chat Agent -->
+    <div id="agentChatLog" class="chat-log"></div>
 
-    <!-- COMMANDES ET CONTROLES (VOIX + TEXTE + STOP) -->
+    <!-- Champ de saisie et boutons (Identiques à RAG) -->
     <div class="controls">
-      <input type="text" id="agentUserInput" placeholder="Donnez un ordre à l'agent..." />
-      <button type="button" id="agentMicBtn">🎙️</button>
-      <button type="button" id="agentSendBtn">Envoyer</button>
-      <button type="button" id="agentStopBtn" class="btn-stop">Stop</button>
+      <input type="text" id="agentUserInput" placeholder="Donnez une instruction à l'agent...">
+      <button id="agentSendBtn">Envoyer</button>
+      <button id="micBtn">🎤 Écouter</button>
+      <button id="stopBtn" title="Arrêter la lecture vocale">⏹️ Stop</button>
     </div>
   </main>
 
-  <!-- FOOTER KO-FI -->
+  <!-- Footer Ko-fi (Identique à RAG) -->
   <footer class="footer-kofi">
     <div class="kofi-card">
       <span class="kofi-dot"></span>
-      <span class="kofi-text">Soutenez le projet Chatbot.IA</span>
-      <a href="https://ko-fi.com" target="_blank" class="kofi-btn">
-        Soutenir sur Ko-Fi <span class="kofi-arrow">→</span>
+      <p class="kofi-text">Vous aimez ce projet ?</p>
+      <a href="https://ko-fi.com/kstang" target="_blank" rel="noopener noreferrer" class="kofi-btn">
+        <span>M'offrir un chocolat sur Kofi</span>
+        <span class="kofi-arrow">→</span>
       </a>
     </div>
   </footer>
@@ -99,11 +99,12 @@
         document.getElementById('header-placeholder').innerHTML = data;
         const links = document.querySelectorAll('.nav-item');
         links.forEach(link => link.classList.remove('active'));
-        const ragLink = Array.from(links).find(l => l.getAttribute('href') === 'agent.html');
-        if (ragLink) ragLink.classList.add('active');
+        const agentLink = Array.from(links).find(l => l.getAttribute('href') === 'agent.html');
+        if (agentLink) agentLink.classList.add('active');
       })
       .catch(err => console.error("Erreur de chargement du header:", err));
   </script>
+
   <script src="agent.js"></script>
 </body>
 </html>

@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChatbotIA - Agent</title>
+  <title>ChatbotIA - RAG</title>
 
   <!-- Polices style Nothing -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -17,69 +18,54 @@
   <div id="header-placeholder"></div>
 
   <main class="container">
-    <h1>Agent IA & Automations</h1>
-    <p class="subtitle">Connectez vos clés d'API et donnez des ordres à votre agent IA autonome.</p>
+    <h1>Assistant IA RAG</h1>
+    <p class="subtitle">Importez vos documents (PDF, TXT) pour poser des questions à une IA alimentée par vos propres données.</p>
 
-    <!-- Zone de configuration des Clés API (Stockage Local) -->
-    <details class="api-keys-card">
-      <summary class="api-keys-header">
-        <span>⚙️ Connexions & Clés API Services (Stockage Local)</span>
-        <span class="badge-status" id="keysStatusBadge">0 connecté(s)</span>
-      </summary>
-      
-      <div class="api-keys-form">
-        <div class="input-group">
-          <label for="keyEmail">📧 Service Email (ex: Resend / Gmail API / SMTP Key)</label>
-          <input type="password" id="keyEmail" placeholder="re_123456789..." autocomplete="off">
-        </div>
-
-        <div class="input-group">
-          <label for="keyCalendar">📅 Google Calendar / iCal Token</label>
-          <input type="password" id="keyCalendar" placeholder="ya29.a0AR..." autocomplete="off">
-        </div>
-
-        <div class="input-group">
-          <label for="keySpotify">🎵 Spotify / Musique API Token</label>
-          <input type="password" id="keySpotify" placeholder="BQC12345..." autocomplete="off">
-        </div>
-
-        <div class="input-group">
-          <label for="keyWebhooks">🔗 Webhook / Zapier / Make URL</label>
-          <input type="text" id="keyWebhooks" placeholder="https://hook.eu1.make.com/..." autocomplete="off">
-        </div>
-
-        <div class="keys-actions">
-          <button type="button" id="saveKeysBtn" class="btn-save">Enregistrer en local</button>
-          <button type="button" id="clearKeysBtn" class="btn-clear">Effacer les clés</button>
-        </div>
-        <p class="security-note">🔒 Vos clés sont enregistrées uniquement sur votre navigateur (localStorage) et ne sont jamais transmises à des tiers sans votre ordre.</p>
+    <!-- Zone de dépôt de fichiers (RAG) -->
+    <div class="upload-box" id="dropZone">
+      <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.csv,.jpg,.jpeg,.png,.webp" hidden>
+      <div class="upload-content">
+        <span class="upload-icon">📁</span>
+        <p class="upload-text">Glissez-déposez vos fichiers ici ou <span class="browse-link" id="browseBtn">parcourir</span></p>
+        <span class="upload-hint">Formats supportés : PDF, TXT, MD, CSV / JPG, JPEG, PNG, WEBP (avec Google Gemma 4 seulement)</span>
       </div>
-    </details>
+    </div>
 
-    <!-- Zone de sélection du modèle -->
+    <!-- Liste des fichiers chargés -->
+    <div class="file-list-container">
+      <h3>Documents indexés (<span id="fileCount">0</span>)</h3>
+      <ul id="fileList" class="file-list">
+        <li class="empty-file-item">Aucun document chargé pour le moment.</li>
+      </ul>
+    </div>
+
+    <!-- Zone de sélection du modèle et paramètres -->
     <div class="config-box">
-      <label for="agentModelSelect">Modèle Agent :</label>
-      <select id="agentModelSelect">
+      <label for="ragModelSelect">Modèle RAG :</label>
+      <select id="ragModelSelect">
+        <!-- Option Groq : ultra-rapide -->
         <option value="llama-3.3-70b-versatile" data-provider="groq">Groq - Llama 3.3 70B (Ultra Rapide)</option>
+        
+        <!-- Options OpenRouter : modèles gratuits variés -->
         <option value="openai/gpt-oss-20b:free" data-provider="openrouter">OpenRouter - GPT OSS 20B (Gratuit)</option>
         <option value="google/gemma-4-26b-a4b-it:free" data-provider="openrouter">OpenRouter - Google Gemma 4 26B A4B (Gratuit/Image compatible)</option>
         <option value="nvidia/nemotron-3-ultra-550b-a55b:free" data-provider="openrouter">OpenRouter - Nvidia Nemotron 3 Ultra 550B A55B (Gratuit)</option>
       </select>
     </div>
 
-    <!-- Zone de Chat Agent -->
-    <div id="agentChatLog" class="chat-log"></div>
+    <!-- Zone de Chat RAG -->
+    <div id="ragChatLog" class="chat-log"></div>
 
-    <!-- Champ de saisie et boutons (Identiques à RAG) -->
+    <!-- Champ de saisie et boutons -->
     <div class="controls">
-      <input type="text" id="agentUserInput" placeholder="Donnez une instruction à l'agent...">
-      <button id="agentSendBtn">Envoyer</button>
+      <input type="text" id="ragUserInput" placeholder="Posez une question sur vos documents...">
+      <button id="ragSendBtn">Envoyer</button>
       <button id="micBtn">🎤 Écouter</button>
       <button id="stopBtn" title="Arrêter la lecture vocale">⏹️ Stop</button>
     </div>
   </main>
 
-  <!-- Footer Ko-fi (Identique à RAG) -->
+  <!-- Footer Ko-fi -->
   <footer class="footer-kofi">
     <div class="kofi-card">
       <span class="kofi-dot"></span>
@@ -99,12 +85,12 @@
         document.getElementById('header-placeholder').innerHTML = data;
         const links = document.querySelectorAll('.nav-item');
         links.forEach(link => link.classList.remove('active'));
-        const agentLink = Array.from(links).find(l => l.getAttribute('href') === 'agent.html');
-        if (agentLink) agentLink.classList.add('active');
+        const ragLink = Array.from(links).find(l => l.getAttribute('href') === 'rag.html');
+        if (ragLink) ragLink.classList.add('active');
       })
       .catch(err => console.error("Erreur de chargement du header:", err));
   </script>
 
-  <script src="agent.js"></script>
+  <script src="rag.js"></script>
 </body>
 </html>
