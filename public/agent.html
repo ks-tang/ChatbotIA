@@ -28,13 +28,21 @@
       </summary>
       
       <div class="api-keys-form">
+        <!-- Gmail nécessite à la fois l'adresse Gmail et le mot de passe d'application -->
         <div class="input-group">
-          <label for="keyEmail">📧 Service Email (Gmail)</label>
-          <input type="password" id="keyEmail" placeholder="abcd efgh ijkl mnop" autocomplete="off">
+            <label for="keyGmailUser">📧 Votre adresse Gmail</label>
+            <input type="email" id="keyGmailUser" placeholder="votre.email@gmail.com" autocomplete="off">
         </div>
+
         <div class="input-group">
-          <label for="keyEmail">📧 Service Email (Resend)</label>
-          <input type="password" id="keyEmail" placeholder="re_123456789..." autocomplete="off">
+            <label for="keyGmailApp">🔑 Mot de passe d'application Gmail</label>
+            <input type="password" id="keyGmailApp" placeholder="abcd efgh ijkl mnop" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label for="keyResend">📧 Service Email (Resend)</label>
+            <input type="password" id="keyResend" placeholder="re_123456789..." autocomplete="off">
+        </div>
         </div>
 
         <div class="input-group">
