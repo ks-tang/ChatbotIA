@@ -86,15 +86,14 @@ clearKeysBtn.addEventListener('click', () => {
 // ===================================================
 async function sendResendEmail(apiKey, toEmail, subject, textContent) {
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('/api/send-email', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev', // Adresse d'expéditeur par défaut de Resend en test
-        to: [toEmail],
+        apiKey: apiKey,
+        to: toEmail,
         subject: subject || 'Message de votre Agent IA',
         html: `<p>${textContent}</p>`
       })
@@ -102,7 +101,7 @@ async function sendResendEmail(apiKey, toEmail, subject, textContent) {
 
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.message || "Erreur lors de l'envoi de l'email via Resend");
+      throw new Error(data.error || "Erreur lors de l'envoi de l'email via le serveur");
     }
     return { success: true, id: data.id };
   } catch (err) {
