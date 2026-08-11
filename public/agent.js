@@ -139,6 +139,26 @@ async function sendResendEmail(apiKey, toEmail, subject, textContent) {
   }
 }
 
+async function callCalendarApi(accessToken, action, params = {}) {
+  try {
+    const res = await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        accessToken: accessToken,
+        action: action, ...params
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur Google Calendar");
+
+    return { success: true, data: data };
+  } catch (err) {
+    console.error("Erreur Calendar :", err);
+    return { success: false, error: err.message };
+  }
+}
 
 // ===================================================
 // 3. CONTROLES VOCAUX ET SYNTHÈSE VOCALE
@@ -330,14 +350,49 @@ async function handleAgentSend() {
     return;
   }
 
+    const lowerPrompt = prompt.toLowerCase();
+
+    // ----------------------------------------------------
+    // ACTION GOOGLE CALENDAR : CONSULTATION OU CRÉATION
+    // ----------------------------------------------------
+    if (keys.calendar && (lowerPrompt.includes('agenda') || lowerPrompt.includes('rendez-vous') || lowerPrompt.includes('événement'))) {
+
+    // Cas 1 : Récupérer / Voir l'agenda
+    if (lowerPrompt.includes('voir') || lowerPrompt.includes('mon agenda') || lowerPrompt.includes('prochain')) {
+        const result = await callCalendarApi(keys.calendar, 'list');
+        removeThinking();
+
+        if (result.success) {
+        const events = result.data.events;
+        if (events.length === 0) {
+            appendMessage('IA Agent', "📅 Aucun événement à venir trouvé dans votre agenda.");
+            speak("Aucun événement à venir.");
+        } else {
+            let textList = "📅 **Vos prochains événements :**<br>";
+            events.forEach(ev => {
+            const dateStr = new Date(ev.start.dateTime || ev.start.date).toLocaleString('fr-FR');
+            textList += `- **${ev.summary}** (${dateStr})<br>`;
+            });
+            appendMessage('IA Agent', textList);
+            speak("Voici vos prochains événements.");
+        }
+        } else {
+        appendMessage('IA Agent', `❌ Échec Calendar : ${result.error}`);
+        }
+
+        agentSendBtn.disabled = false;
+        return; // STOPPE L'EXÉCUTION
+    }
+    }
+
   // OPTION C : Discussion classique avec le modèle IA
   const servicesSummary = getActiveKeysSummary();
   const agentContext = `
-[CONTEXTE AGENT ET INTEGRATIONS]
-${servicesSummary.text}
+        [CONTEXTE AGENT ET INTEGRATIONS]
+        ${servicesSummary.text}
 
-Réponds directement et poliment à l'utilisateur au sujet de son instruction.
-`;
+        Réponds directement et poliment à l'utilisateur au sujet de son instruction.
+        `;
 
   try {
     const response = await fetch('/api/chat', {
