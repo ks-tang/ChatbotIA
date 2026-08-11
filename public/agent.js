@@ -1,5 +1,5 @@
 // ===================================================
-// GESTION DU LOCAL STORAGE POUR LES CLÉS API
+// 1. GESTION DU LOCAL STORAGE POUR LES CLÉS API
 // ===================================================
 const KEYS_STORAGE_KEY = 'chatbot_ia_agent_keys';
 
@@ -14,19 +14,18 @@ const saveKeysBtn = document.getElementById('saveKeysBtn');
 const clearKeysBtn = document.getElementById('clearKeysBtn');
 const keysStatusBadge = document.getElementById('keysStatusBadge');
 
-// Charger les clés sauvegardées au démarrage
 function loadSavedKeys() {
   const saved = localStorage.getItem(KEYS_STORAGE_KEY);
   if (!saved) return;
 
   try {
     const keys = JSON.parse(saved);
-    if (keys.gmailUser) keyGmailUserInput.value = keys.gmailUser;
-    if (keys.gmailApp) keyGmailAppInput.value = keys.gmailApp;
-    if (keys.resend) keyResendInput.value = keys.resend;
-    if (keys.calendar) keyCalendarInput.value = keys.calendar;
-    if (keys.spotify) keySpotifyInput.value = keys.spotify;
-    if (keys.webhooks) keyWebhooksInput.value = keys.webhooks;
+    if (keys.gmailUser && keyGmailUserInput) keyGmailUserInput.value = keys.gmailUser;
+    if (keys.gmailApp && keyGmailAppInput) keyGmailAppInput.value = keys.gmailApp;
+    if (keys.resend && keyResendInput) keyResendInput.value = keys.resend;
+    if (keys.calendar && keyCalendarInput) keyCalendarInput.value = keys.calendar;
+    if (keys.spotify && keySpotifyInput) keySpotifyInput.value = keys.spotify;
+    if (keys.webhooks && keyWebhooksInput) keyWebhooksInput.value = keys.webhooks;
     updateBadge();
   } catch (e) {
     console.error("Erreur lors de la lecture des clés API depuis localStorage:", e);
@@ -38,7 +37,6 @@ function getSavedKeys() {
   return saved ? JSON.parse(saved) : {};
 }
 
-// Obtenir un résumé des clés actives pour l'injecter au prompt
 function getActiveKeysSummary() {
   const keys = getSavedKeys();
   const activeServices = [];
@@ -59,17 +57,17 @@ function getActiveKeysSummary() {
 
 function updateBadge() {
   const summary = getActiveKeysSummary();
-  keysStatusBadge.textContent = `${summary.count} connecté(s)`;
+  if (keysStatusBadge) keysStatusBadge.textContent = `${summary.count} connecté(s)`;
 }
 
 saveKeysBtn.addEventListener('click', () => {
   const keys = {
-    gmailUser: keyGmailUserInput.value.trim(),
-    gmailApp: keyGmailAppInput.value.trim(),
-    resend: keyResendInput.value.trim(),
-    calendar: keyCalendarInput.value.trim(),
-    spotify: keySpotifyInput.value.trim(),
-    webhooks: keyWebhooksInput.value.trim()
+    gmailUser: keyGmailUserInput ? keyGmailUserInput.value.trim() : '',
+    gmailApp: keyGmailAppInput ? keyGmailAppInput.value.trim() : '',
+    resend: keyResendInput ? keyResendInput.value.trim() : '',
+    calendar: keyCalendarInput ? keyCalendarInput.value.trim() : '',
+    spotify: keySpotifyInput ? keySpotifyInput.value.trim() : '',
+    webhooks: keyWebhooksInput ? keyWebhooksInput.value.trim() : ''
   };
 
   localStorage.setItem(KEYS_STORAGE_KEY, JSON.stringify(keys));
@@ -80,139 +78,70 @@ saveKeysBtn.addEventListener('click', () => {
 clearKeysBtn.addEventListener('click', () => {
   if (confirm("Voulez-vous vraiment effacer toutes vos clés enregistrées ?")) {
     localStorage.removeItem(KEYS_STORAGE_KEY);
-    keyEmailInput.value = '';
-    keyCalendarInput.value = '';
-    keySpotifyInput.value = '';
-    keyWebhooksInput.value = '';
+    if (keyGmailUserInput) keyGmailUserInput.value = '';
+    if (keyGmailAppInput) keyGmailAppInput.value = '';
+    if (keyResendInput) keyResendInput.value = '';
+    if (keyCalendarInput) keyCalendarInput.value = '';
+    if (keySpotifyInput) keySpotifyInput.value = '';
+    if (keyWebhooksInput) keyWebhooksInput.value = '';
     updateBadge();
   }
 });
 
+
 // ===================================================
-// FONCTION D'ENVOI D'EMAIL DÉDIÉE (RESEND ET GMAIL API)
+// 2. FONCTIONS D'APPEL VERS LES ROUTES SERVEUR /API
 // ===================================================
-async function handleAgentSend() {
-  const prompt = agentUserInput.value.trim();
-  if (!prompt) return;
-
-  stopSpeech();
-  appendMessage('Utilisateur', prompt);
-  agentUserInput.value = '';
-
-  agentSendBtn.disabled = true;
-  showThinking();
-
-  const keys = getSavedKeys();
-  const selectElement = document.getElementById('agentModelSelect');
-  const selectedOption = selectElement.options[selectElement.selectedIndex];
-  const providerStr = selectedOption.getAttribute('data-provider');
-
-  // Recherche d'une adresse email dans la saisie utilisateur
-  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
-  const foundEmails = prompt.match(emailRegex);
-
-  // ----------------------------------------------------
-  // CAS 1 : ENVOI VIA GMAIL (Si Gmail User + App Password sont renseignés)
-  // ----------------------------------------------------
-  if (keys.gmailUser && keys.gmailApp && foundEmails && foundEmails.length > 0) {
-    const targetEmail = foundEmails[0];
-    
-    const result = await sendGmailEmail(
-      keys.gmailUser, 
-      keys.gmailApp, 
-      targetEmail, 
-      "Message de votre Agent IA", 
-      prompt
-    );
-
-    removeThinking();
-
-    if (result.success) {
-      const msg = `✅ E-mail envoyé avec succès à <strong>${targetEmail}</strong> via Gmail ! (ID: ${result.id})`;
-      appendMessage('IA Agent', msg);
-      speak(`E-mail envoyé avec succès à ${targetEmail}`);
-    } else {
-      const msg = `❌ Échec de l'envoi via Gmail : ${result.error}`;
-      appendMessage('IA Agent', msg);
-      speak("Une erreur est survenue lors de l'envoi de l'e-mail.");
-    }
-
-    agentSendBtn.disabled = false;
-    return; // On stoppe ici pour éviter que l'IA ne génère son message texte par défaut
-  }
-
-  // ----------------------------------------------------
-  // CAS 2 : ENVOI VIA RESEND (Si clé Resend configurée)
-  // ----------------------------------------------------
-  if (keys.resend && foundEmails && foundEmails.length > 0) {
-    const targetEmail = foundEmails[0];
-    
-    const result = await sendResendEmail(
-      keys.resend, 
-      targetEmail, 
-      "Message de votre Agent IA", 
-      prompt
-    );
-
-    removeThinking();
-
-    if (result.success) {
-      const msg = `✅ E-mail envoyé avec succès à <strong>${targetEmail}</strong> via Resend ! (ID: ${result.id})`;
-      appendMessage('IA Agent', msg);
-      speak(`E-mail envoyé avec succès à ${targetEmail}`);
-    } else {
-      const msg = `❌ Échec de l'envoi via Resend : ${result.error}`;
-      appendMessage('IA Agent', msg);
-      speak("Une erreur est survenue lors de l'envoi de l'e-mail.");
-    }
-
-    agentSendBtn.disabled = false;
-    return; // On stoppe ici
-  }
-
-  // ----------------------------------------------------
-  // CAS 3 : TRAITEMENT DE CHAT CLASSIQUE PAR L'IA
-  // ----------------------------------------------------
-  const servicesSummary = getActiveKeysSummary();
-  const agentContext = `
-[CONTEXTE AGENT ET INTEGRATIONS]
-${servicesSummary.text}
-
-Réponds directement et poliment à l'utilisateur au sujet de son instruction.
-`;
-
+async function sendGmailEmail(gmailUser, appPassword, toEmail, subject, textContent) {
   try {
-    const response = await fetch('/api/chat', {
+    const res = await fetch('/api/send-gmail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: prompt,
-        context: agentContext,
-        model: selectElement.value,
-        provider: providerStr
+        gmailUser: gmailUser,
+        appPassword: appPassword,
+        to: toEmail,
+        subject: subject || 'Message de votre Agent IA',
+        html: `<p>${textContent}</p>`
       })
     });
 
-    if (!response.ok) throw new Error("Erreur serveur API");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur d'envoi Gmail");
 
-    const data = await response.json();
-    const aiMessage = data.choices[0].message.content;
-
-    removeThinking();
-    appendMessage('IA Agent', aiMessage);
-    speak(aiMessage);
-
-  } catch (error) {
-    console.error("Erreur Agent :", error);
-    removeThinking();
-    appendMessage('Système', 'Erreur lors de l\'exécution de l\'ordre.');
-  } finally {
-    agentSendBtn.disabled = false;
+    return { success: true, id: data.messageId };
+  } catch (err) {
+    console.error("Erreur Gmail :", err);
+    return { success: false, error: err.message };
   }
 }
 
+async function sendResendEmail(apiKey, toEmail, subject, textContent) {
+  try {
+    const res = await fetch('/api/send-resend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: apiKey,
+        to: toEmail,
+        subject: subject || 'Message de votre Agent IA',
+        html: `<p>${textContent}</p>`
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur d'envoi Resend");
+
+    return { success: true, id: data.id };
+  } catch (err) {
+    console.error("Erreur Resend :", err);
+    return { success: false, error: err.message };
+  }
+}
+
+
 // ===================================================
-// BINDINGS DES BOUTONS DE CONTRÔLE (IDENTIQUES À RAG)
+// 3. CONTROLES VOCAUX ET SYNTHÈSE VOCALE
 // ===================================================
 const agentUserInput = document.getElementById('agentUserInput');
 const agentSendBtn = document.getElementById('agentSendBtn');
@@ -220,7 +149,6 @@ const micBtn = document.getElementById('micBtn');
 const stopBtn = document.getElementById('stopBtn');
 const agentChatLog = document.getElementById('agentChatLog');
 
-// Reconnaissance vocale
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let isListening = false;
@@ -261,7 +189,8 @@ micBtn.addEventListener('click', () => {
 function speak(text) {
   stopSpeech();
   if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
+    const cleanedText = cleanTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(cleanedText);
     utterance.lang = 'fr-FR';
     window.speechSynthesis.speak(utterance);
   }
@@ -280,8 +209,25 @@ stopBtn.addEventListener('click', () => {
   }
 });
 
+function cleanTextForSpeech(text) {
+  if (!text) return '';
+
+  return text
+    .replace(/[*_]{1,3}([^*_]+)[*_]{1,3}/g, '$1')
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[-*_=]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
 // ===================================================
-// GESTION DES MESSAGES DU CHAT
+// 4. AFFICHAGE DU CHAT
 // ===================================================
 function appendMessage(role, text) {
   const msgDiv = document.createElement('div');
@@ -305,8 +251,9 @@ function removeThinking() {
   if (thinkingDiv) thinkingDiv.remove();
 }
 
+
 // ===================================================
-// ENVOI DE L'ORDRE ET DÉCLENCHEMENT D'ACTIONS
+// 5. EXÉCUTION DE L'ORDRE
 // ===================================================
 async function handleAgentSend() {
   const prompt = agentUserInput.value.trim();
@@ -324,24 +271,30 @@ async function handleAgentSend() {
   const selectedOption = selectElement.options[selectElement.selectedIndex];
   const providerStr = selectedOption.getAttribute('data-provider');
 
-  // Extraction d'adresse email si présente dans la demande
+  // Recherche si une adresse mail est présente dans le message
   const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
   const foundEmails = prompt.match(emailRegex);
 
-  // 1. Si une clé Resend est configurée ET qu'un email est demandé
-  if (keys.email && foundEmails && foundEmails.length > 0) {
+  // OPTION A : Envoi via Gmail (Prioritaire si clés Gmail renseignées)
+  if (keys.gmailUser && keys.gmailApp && foundEmails && foundEmails.length > 0) {
     const targetEmail = foundEmails[0];
     
-    // Appel direct à l'API Resend
-    const result = await sendResendEmail(keys.email, targetEmail, "Message envoyé par votre Agent IA", prompt);
+    const result = await sendGmailEmail(
+      keys.gmailUser, 
+      keys.gmailApp, 
+      targetEmail, 
+      "Message de votre Agent IA", 
+      prompt
+    );
+
     removeThinking();
 
     if (result.success) {
-      const msg = `✅ E-mail envoyé avec succès à <strong>${targetEmail}</strong> via Resend ! (ID: ${result.id})`;
+      const msg = `✅ E-mail envoyé avec succès à <strong>${targetEmail}</strong> via Gmail !`;
       appendMessage('IA Agent', msg);
       speak(`E-mail envoyé avec succès à ${targetEmail}`);
     } else {
-      const msg = `❌ Échec lors de l'envoi de l'e-mail via Resend : ${result.error}`;
+      const msg = `❌ Échec de l'envoi via Gmail : ${result.error}`;
       appendMessage('IA Agent', msg);
       speak("Une erreur est survenue lors de l'envoi de l'e-mail.");
     }
@@ -350,7 +303,34 @@ async function handleAgentSend() {
     return;
   }
 
-  // 2. Sinon, traitement normal par l'IA
+  // OPTION B : Envoi via Resend (si clé Resend renseignée)
+  if (keys.resend && foundEmails && foundEmails.length > 0) {
+    const targetEmail = foundEmails[0];
+    
+    const result = await sendResendEmail(
+      keys.resend, 
+      targetEmail, 
+      "Message de votre Agent IA", 
+      prompt
+    );
+
+    removeThinking();
+
+    if (result.success) {
+      const msg = `✅ E-mail envoyé avec succès à <strong>${targetEmail}</strong> via Resend !`;
+      appendMessage('IA Agent', msg);
+      speak(`E-mail envoyé avec succès à ${targetEmail}`);
+    } else {
+      const msg = `❌ Échec de l'envoi via Resend : ${result.error}`;
+      appendMessage('IA Agent', msg);
+      speak("Une erreur est survenue lors de l'envoi de l'e-mail.");
+    }
+
+    agentSendBtn.disabled = false;
+    return;
+  }
+
+  // OPTION C : Discussion classique avec le modèle IA
   const servicesSummary = getActiveKeysSummary();
   const agentContext = `
 [CONTEXTE AGENT ET INTEGRATIONS]
@@ -389,10 +369,10 @@ Réponds directement et poliment à l'utilisateur au sujet de son instruction.
   }
 }
 
+// Initialisation des écouteurs
 agentSendBtn.addEventListener('click', handleAgentSend);
 agentUserInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') handleAgentSend();
 });
 
-// Initialisation
 loadSavedKeys();

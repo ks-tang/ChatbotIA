@@ -8,16 +8,15 @@ export default async function handler(req, res) {
   const { gmailUser, appPassword, to, subject, html } = req.body || {};
 
   if (!gmailUser || !appPassword || !to) {
-    return res.status(400).json({ error: 'Adresse Gmail, mot de passe d\'application et destinataire requis.' });
+    return res.status(400).json({ error: "Adresse Gmail, mot de passe d'application et destinataire requis." });
   }
 
   try {
-    // Configuration du transporteur SMTP Gmail
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: gmailUser,
-        pass: appPassword // Le mot de passe d'application à 16 caractères
+        pass: appPassword
       }
     });
 
