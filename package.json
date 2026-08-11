@@ -1,5 +1,8 @@
 {
   "name": "chatbot-ia",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "nodemailer": "^9.0.5"
+  }
 }

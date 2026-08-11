@@ -82,11 +82,11 @@ clearKeysBtn.addEventListener('click', () => {
 });
 
 // ===================================================
-// FONCTION D'ENVOI D'EMAIL DÉDIÉE (RESEND API)
+// FONCTION D'ENVOI D'EMAIL DÉDIÉE (RESEND ET GMAIL API)
 // ===================================================
 async function sendResendEmail(apiKey, toEmail, subject, textContent) {
   try {
-    const res = await fetch('/api/send-email', {
+    const res = await fetch('/api/send-resend', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -113,6 +113,30 @@ async function sendResendEmail(apiKey, toEmail, subject, textContent) {
     return { success: true, id: data.id };
   } catch (err) {
     console.error("Erreur Resend :", err);
+    return { success: false, error: err.message };
+  }
+}
+
+async function sendGmailEmail(gmailUser, appPassword, toEmail, subject, textContent) {
+  try {
+    const res = await fetch('/api/send-gmail', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gmailUser: gmailUser,
+        appPassword: appPassword,
+        to: toEmail,
+        subject: subject || 'Message de votre Agent IA',
+        html: `<p>${textContent}</p>`
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erreur d'envoi Gmail");
+
+    return { success: true, id: data.messageId };
+  } catch (err) {
+    console.error("Erreur Gmail :", err);
     return { success: false, error: err.message };
   }
 }
