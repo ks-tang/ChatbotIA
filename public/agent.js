@@ -80,14 +80,15 @@ clearKeysBtn.addEventListener('click', () => {
 });
 
 // ===================================================
-// RECONNAISSANCE VOCALE & SYNTHÈSE (WEB SPEECH API)
+// BINDINGS DES BOUTONS DE CONTRÔLE (IDENTIQUES À RAG)
 // ===================================================
 const agentUserInput = document.getElementById('agentUserInput');
-const agentMicBtn = document.getElementById('agentMicBtn');
 const agentSendBtn = document.getElementById('agentSendBtn');
-const agentStopBtn = document.getElementById('agentStopBtn');
+const micBtn = document.getElementById('micBtn');
+const stopBtn = document.getElementById('stopBtn');
 const agentChatLog = document.getElementById('agentChatLog');
 
+// Reconnaissance vocale
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let isListening = false;
@@ -100,16 +101,16 @@ if (SpeechRecognition) {
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     agentUserInput.value = transcript;
-    handleAgentSend(); // Envoie automatiquement après la dictée
+    handleAgentSend();
   };
 
   recognition.onend = () => {
     isListening = false;
-    agentMicBtn.style.backgroundColor = 'var(--accent-red)';
+    micBtn.textContent = '🎤 Écouter';
   };
 }
 
-agentMicBtn.addEventListener('click', () => {
+micBtn.addEventListener('click', () => {
   if (!recognition) {
     alert("La reconnaissance vocale n'est pas supportée par votre navigateur.");
     return;
@@ -121,8 +122,7 @@ agentMicBtn.addEventListener('click', () => {
     stopSpeech();
     recognition.start();
     isListening = true;
-    agentMicBtn.style.backgroundColor = '#ffffff';
-    agentMicBtn.style.color = '#000000';
+    micBtn.textContent = '🔴 Écoute...';
   }
 });
 
@@ -141,7 +141,7 @@ function stopSpeech() {
   }
 }
 
-agentStopBtn.addEventListener('click', () => {
+stopBtn.addEventListener('click', () => {
   stopSpeech();
   if (recognition && isListening) {
     recognition.stop();
