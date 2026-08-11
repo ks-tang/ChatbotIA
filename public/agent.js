@@ -29,15 +29,17 @@ function loadSavedKeys() {
   }
 }
 
+function getSavedKeys() {
+  const saved = localStorage.getItem(KEYS_STORAGE_KEY);
+  return saved ? JSON.parse(saved) : {};
+}
+
 // Obtenir un résumé des clés actives pour l'injecter au prompt
 function getActiveKeysSummary() {
-  const saved = localStorage.getItem(KEYS_STORAGE_KEY);
-  if (!saved) return { count: 0, text: "Aucun service connecté." };
-
-  const keys = JSON.parse(saved);
+  const keys = getSavedKeys();
   const activeServices = [];
 
-  if (keys.email) activeServices.push("Service Email (Token présent)");
+  if (keys.email) activeServices.push("Service Email Resend (Clé configurée)");
   if (keys.calendar) activeServices.push("Google Calendar (Token présent)");
   if (keys.spotify) activeServices.push("Spotify (Token présent)");
   if (keys.webhooks) activeServices.push(`Webhook Zapier/Make (${keys.webhooks})`);
@@ -78,6 +80,36 @@ clearKeysBtn.addEventListener('click', () => {
     updateBadge();
   }
 });
+
+// ===================================================
+// FONCTION D'ENVOI D'EMAIL DÉDIÉE (RESEND API)
+// ===================================================
+async function sendResendEmail(apiKey, toEmail, subject, textContent) {
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev', // Adresse d'expéditeur par défaut de Resend en test
+        to: [toEmail],
+        subject: subject || 'Message de votre Agent IA',
+        html: `<p>${textContent}</p>`
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Erreur lors de l'envoi de l'email via Resend");
+    }
+    return { success: true, id: data.id };
+  } catch (err) {
+    console.error("Erreur Resend :", err);
+    return { success: false, error: err.message };
+  }
+}
 
 // ===================================================
 // BINDINGS DES BOUTONS DE CONTRÔLE (IDENTIQUES À RAG)
@@ -174,7 +206,7 @@ function removeThinking() {
 }
 
 // ===================================================
-// ENVOI DE L'ORDRE À L'API
+// ENVOI DE L'ORDRE ET DÉCLENCHEMENT D'ACTIONS
 // ===================================================
 async function handleAgentSend() {
   const prompt = agentUserInput.value.trim();
@@ -187,20 +219,44 @@ async function handleAgentSend() {
   agentSendBtn.disabled = true;
   showThinking();
 
+  const keys = getSavedKeys();
   const selectElement = document.getElementById('agentModelSelect');
   const selectedOption = selectElement.options[selectElement.selectedIndex];
   const providerStr = selectedOption.getAttribute('data-provider');
 
-  // Déterminer les services connectés pour donner du contexte à l'IA
+  // Extraction d'adresse email si présente dans la demande
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+  const foundEmails = prompt.match(emailRegex);
+
+  // 1. Si une clé Resend est configurée ET qu'un email est demandé
+  if (keys.email && foundEmails && foundEmails.length > 0) {
+    const targetEmail = foundEmails[0];
+    
+    // Appel direct à l'API Resend
+    const result = await sendResendEmail(keys.email, targetEmail, "Message envoyé par votre Agent IA", prompt);
+    removeThinking();
+
+    if (result.success) {
+      const msg = `✅ E-mail envoyé avec succès à <strong>${targetEmail}</strong> via Resend ! (ID: ${result.id})`;
+      appendMessage('IA Agent', msg);
+      speak(`E-mail envoyé avec succès à ${targetEmail}`);
+    } else {
+      const msg = `❌ Échec lors de l'envoi de l'e-mail via Resend : ${result.error}`;
+      appendMessage('IA Agent', msg);
+      speak("Une erreur est survenue lors de l'envoi de l'e-mail.");
+    }
+
+    agentSendBtn.disabled = false;
+    return;
+  }
+
+  // 2. Sinon, traitement normal par l'IA
   const servicesSummary = getActiveKeysSummary();
   const agentContext = `
 [CONTEXTE AGENT ET INTEGRATIONS]
 ${servicesSummary.text}
 
-Si l'utilisateur demande d'effectuer une action (ex: envoyer un mail, créer un événement, jouer un morceau) :
-1. Analyse si le service requis est disponible dans la liste ci-dessus.
-2. Si le service est disponible, simule la réponse et explique clairement l'action qui serait déclenchée.
-3. Si le webhook est configuré, indique qu'une requête HTTP POST va être envoyée.
+Réponds directement et poliment à l'utilisateur au sujet de son instruction.
 `;
 
   try {
