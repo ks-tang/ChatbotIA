@@ -97,7 +97,12 @@
       .then(res => res.text())
       .then(data => {
         document.getElementById('header-placeholder').innerHTML = data;
-      });
+        const links = document.querySelectorAll('.nav-item');
+        links.forEach(link => link.classList.remove('active'));
+        const ragLink = Array.from(links).find(l => l.getAttribute('href') === 'agent.html');
+        if (ragLink) ragLink.classList.add('active');
+      })
+      .catch(err => console.error("Erreur de chargement du header:", err));
   </script>
   <script src="agent.js"></script>
 </body>
