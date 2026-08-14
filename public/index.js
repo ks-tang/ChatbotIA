@@ -48,6 +48,7 @@ async function sendToAI(promptText) {
   
   const selectedModel = selectedOption.value;
   const provider = selectedOption.getAttribute('data-provider');
+  const endpoint = selectedOption.getAttribute('data-endpoint') || null;
 
   console.log('--- [ENVOI DE LA REQUÊTE] ---');
   console.log('Prompt:', promptText);
@@ -66,7 +67,8 @@ async function sendToAI(promptText) {
       body: JSON.stringify({
         message: promptText,
         model: selectedModel,
-        provider: provider
+        provider: provider,
+        endpoint: endpoint
       })
     });
 
@@ -127,6 +129,9 @@ function cleanTextForSpeech(text) {
     
     // Nettoie les tirets ou astérisques isolés restants
     .replace(/[-*_=]/g, ' ')
+
+    // Supprime les emojis/pictogrammes pour éviter que la voix ne les lise mot à mot
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
     
     // Remplace les espaces multiples ou retours à la ligne consécutifs par un seul espace
     .replace(/\s+/g, ' ')

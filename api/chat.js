@@ -8,20 +8,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  // 1. Récupération des paramètres (ajout de "images")
-  const { message, model, provider, context, images } = req.body;
-  console.log(`Provider sélectionné: ${provider} | Modèle: ${model} | RAG Contexte présent: ${!!context} | Images: ${images?.length || 0}`);
+  // 1. Récupération des paramètres (avec l'ajout de "endpoint" pour UncloseAI)
+  const { message, model, provider, context, images, endpoint } = req.body;
+  console.log(`Provider sélectionné: ${provider} | Modèle: ${model} | Endpoint dédié: ${endpoint || 'aucun'} | RAG Contexte présent: ${!!context} | Images: ${images?.length || 0}`);
 
   // 2. Construction de la liste des messages
   const messagesPayload = [];
 
   if (context && context.trim() !== '') {
     const systemPrompt = `Tu es un assistant IA spécialisé et rigoureux.
-    Tu dois répondre à la question de l'utilisateur en te basant EXCLUSIVEMENT sur les documents de référence et/ou images fournis ci-dessous.
-    Si l'information n'est pas présente dans les documents ou images, indique-le clairement à l'utilisateur sans inventer de faits.
+      Tu dois répondre à la question de l'utilisateur en te basant EXCLUSIVEMENT sur les documents de référence et/ou images fournis ci-dessous.
+      Si l'information n'est pas présente dans les documents ou images, indique-le clairement à l'utilisateur sans inventer de faits.
 
-    === DOCUMENTS DE RÉFÉRENCE ===
-    ${context}`;
+      === DOCUMENTS DE RÉFÉRENCE ===
+      ${context}`;
 
     messagesPayload.push({ role: 'system', content: systemPrompt });
   }
@@ -52,6 +52,7 @@ export default async function handler(req, res) {
   try {
     let response;
 
+    // --- BRANCHE GROQ ---
     if (provider === 'groq') {
       console.log('Appel à l\'API Groq...');
       response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -61,10 +62,33 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: model || 'llama-3.2-11b-vision-preview',
+          model: model || 'llama-3.3-70b-versatile',
           messages: messagesPayload
         })
       });
+
+    // --- BRANCHE UNCLOSEAI ---
+    } else if (provider === 'uncloseai') {
+      // Détermination de l'URL de base (ex: https://hermes.ai.unturf.com/v1)
+      const baseUrl = endpoint || 'https://hermes.ai.unturf.com/v1';
+      // Nettoyage au cas où le slash final est présent
+      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      const targetUrl = `${cleanBaseUrl}/chat/completions`;
+
+      console.log(`Appel à l'API UncloseAI sur : ${targetUrl}...`);
+
+      response = await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: model || 'hermes',
+          messages: messagesPayload
+        })
+      });
+
+    // --- BRANCHE OPENROUTER (PAR DÉFAUT) ---
     } else {
       console.log('Appel à l\'API OpenRouter...');
       response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -76,7 +100,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: model || 'google/gemini-2.0-flash-001',
+          model: model || 'openai/gpt-oss-20b:free',
           messages: messagesPayload
         })
       });
@@ -89,7 +113,7 @@ export default async function handler(req, res) {
     if (!response.ok) {
       console.error('❌ Erreur renvoyée par le provider:', JSON.stringify(data, null, 2));
       return res.status(response.status).json({ 
-        error: data.error?.message || 'Erreur renvoyée par le fournisseur d\'IA',
+        error: data.error?.message || data.message || 'Erreur renvoyée par le fournisseur d\'IA',
         details: data 
       });
     }
