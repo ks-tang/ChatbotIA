@@ -69,22 +69,32 @@ export default async function handler(req, res) {
 
     // --- BRANCHE UNCLOSEAI ---
     } else if (provider === 'uncloseai') {
-      // Détermination de l'URL de base (ex: https://hermes.ai.unturf.com/v1)
       const baseUrl = endpoint || 'https://hermes.ai.unturf.com/v1';
-      // Nettoyage au cas où le slash final est présent
       const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
       const targetUrl = `${cleanBaseUrl}/chat/completions`;
 
-      console.log(`Appel à l'API UncloseAI sur : ${targetUrl}...`);
+      // Détermination intelligente du modèle par défaut si l'option passe un nom simplifié
+      let targetModel = model;
+      if (!targetModel || targetModel === 'hermes') {
+        targetModel = 'adamo1139/Hermes-3-Llama-3.1-8B-FP8-Dynamic';
+      } else if (targetModel === 'qwen') {
+        targetModel = 'hf.co/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF:Q4_K_M';
+      }
+
+      console.log(`Appel UncloseAI vers : ${targetUrl} (Modèle: ${targetModel})...`);
 
       response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer dummy-api-key', // Clé fictive requise par les endpoints Unturf
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         },
         body: JSON.stringify({
-          model: model || 'hermes',
-          messages: messagesPayload
+          model: targetModel,
+          messages: messagesPayload,
+          temperature: 0.5,
+          max_tokens: 1000
         })
       });
 
