@@ -48,72 +48,50 @@ async function sendToAI(promptText) {
   
   const selectedModel = selectedOption.value;
   const provider = selectedOption.getAttribute('data-provider');
-  const endpoint = selectedOption.getAttribute('data-endpoint');
+  const endpoint = selectedOption.getAttribute('data-endpoint') || null;
 
   console.log('--- [ENVOI DE LA REQUÊTE] ---');
   console.log('Prompt:', promptText);
   console.log('Modèle:', selectedModel);
   console.log('Provider:', provider);
-  console.log('Endpoint:', endpoint);
 
   appendMessage('Utilisateur', promptText);
+
   showThinking();
 
   try {
-    let response;
-    let data;
 
-    // 🟢 BRANCHE UNCLOSEAI (Appel direct depuis le navigateur)
-    if (provider === 'uncloseai' && endpoint) {
-      console.log('Appel direct vers UncloseAI...');
-      const targetUrl = `${endpoint.replace(/\/$/, '')}/chat/completions`;
+    
+    console.log('Envoi de la requête POST vers /api/chat...');
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: promptText,
+        model: selectedModel,
+        provider: provider,
+        endpoint: endpoint
+      })
+    });
 
-      response = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer dummy-api-key'
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          messages: [{ role: 'user', content: promptText }]
-        })
-      });
+    console.log('Statut HTTP /api/chat:', response.status);
 
-      data = await response.json();
-
-    // 🔵 BRANCHE STANDARD VIA VERCEL (/api/chat) POUR GROQ & OPENROUTER
-    } else {
-      console.log('Envoi de la requête POST vers /api/chat...');
-      response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: promptText,
-          model: selectedModel,
-          provider: provider
-        })
-      });
-
-      data = await response.json();
-    }
-
+    const data = await response.json();
     removeThinking();
-    console.log('Réponse reçue:', data);
+    console.log('Réponse reçue du serveur:', data);
 
     if (response.ok && data.choices && data.choices[0]) {
       const reply = data.choices[0].message.content;
       appendMessage('IA', reply);
       speak(reply);
     } else {
-      console.warn('⚠️ Erreur dans la réponse:', data);
+      console.warn('⚠️ La réponse ne contient pas de choix valide ou comporte une erreur:', data);
       
       let friendlyError = 'L\'IA sélectionnée est indisponible.';
+
       if (response.status === 429) {
-        friendlyError = 'Ce modèle gratuit est temporairement surchargé. Réessayez dans une minute.';
-      } else if (data.error?.message) {
-        friendlyError = data.error.message;
-      } else if (typeof data.error === 'string') {
+        friendlyError = 'Ce modèle gratuit est temporairement surchargé. Réessayez dans une minute ou changez de modèle.';
+      } else if (data.error) {
         friendlyError = data.error;
       }
       
@@ -122,9 +100,8 @@ async function sendToAI(promptText) {
     }
 
   } catch (error) {
-    removeThinking();
     console.error('❌ Erreur Fetch côté client:', error);
-    appendMessage('Système', `Erreur de connexion client : ${error.message}`);
+    appendMessage('Système', 'Erreur lors de la communication avec le serveur.');
   }
 }
 
