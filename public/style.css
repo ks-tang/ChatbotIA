@@ -223,7 +223,7 @@ button:hover {
 }
 
 /* ===================================================
-   HEADER REUTILISABLE (NOTHING AESTHETIC)
+   HEADER REUTILISABLE 
    =================================================== */
 
 .nothing-header {
@@ -248,6 +248,19 @@ button:hover {
   gap: 10px;
   text-decoration: none;
   color: var(--text-main);
+}
+
+.header-robot-logo {
+  /* Garde les pixels bien nets */
+  shape-rendering: crispEdges;
+  image-rendering: pixelated;
+  
+  /* Animation légère au survol */
+  transition: transform 0.2s ease;
+}
+
+.brand-logo:hover .header-robot-logo {
+  transform: scale(1.1);
 }
 
 .brand-dot {
